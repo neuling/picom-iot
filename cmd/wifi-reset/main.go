@@ -94,6 +94,7 @@ func main() {
 	system("chown root.root /etc/default/hostapd")
 
 	system("systemctl enable dnsmasq")
+	system("systemctl unmask hostapd.service")
 	system("systemctl enable hostapd")
 
 	system("reboot")
