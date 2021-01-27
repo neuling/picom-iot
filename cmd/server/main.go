@@ -14,35 +14,12 @@ import (
 const (
 	wpaSupplicant = `ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
+country=AT
 
 network={
 	ssid="#ssid#"
 	psk="#password#"
 }`
-	defaultHostapd = `DAEMON_CONF="/etc/hostapd/hostapd.conf`
-	dnsmasqConf    = `interface=wlan0
-dhcp-range=10.0.0.2,10.0.0.20,255.255.255.0,24h`
-	hostapdConf = `interface=wlan0
-driver=nl80211
-ssid=picom
-hw_mode=g
-channel=7
-wmm_enabled=0
-macaddr_acl=0
-auth_algs=1
-ignore_broadcast_ssid=0`
-	dhcpcdConfHost = `hostname
-clientid
-persistent
-option rapid_commit
-option domain_name_servers, domain_name, domain_search, host_name
-option classless_static_routes
-option ntp_servers
-option interface_mtu
-require dhcp_server_identifier
-slaac private
-interface wlan0
-static ip_address=10.0.0.1/24`
 	dhcpcdConfClient = `hostname
 clientid
 persistent
