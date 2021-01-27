@@ -38,8 +38,8 @@ func isDevelopment() bool {
 }
 
 func getWpaSupplicant(ssid string, password string) string {
-	replaced := strings.ReplaceAll(wpaSupplicant, "#ssid#", ssid)
-	replaced = strings.ReplaceAll(replaced, "#password#", password)
+	replaced := strings.Replace(wpaSupplicant, "#ssid#", ssid, -1)
+	replaced = strings.Replace(replaced, "#password#", password, -1)
 	return replaced
 }
 
