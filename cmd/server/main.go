@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"os/user"
 	"strings"
+	"time"
 
 	"html/template"
 
@@ -39,6 +40,29 @@ slaac private`
 #username#
 #password#
 `
+	rcLocal = `#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+# By default this script does nothing.
+
+# Print the IP address
+_IP=$(hostname -I) || true
+if [ "$_IP" ]; then
+  printf "My IP address is %s\n" "$_IP"
+fi
+
+# Start PICOM Setup Server
+# sudo /home/pi/bin/picom-client &
+
+exit 0`
 )
 
 func isDevelopment() bool {
@@ -46,10 +70,10 @@ func isDevelopment() bool {
 	return env == "development"
 }
 
-func getPicomConfig(username string, server string, server_password string) string {
+func getPicomConfig(username string, server string, password string) string {
 	replaced := strings.Replace(picomConfig, "#username#", username, -1)
 	replaced = strings.Replace(replaced, "#server#", server, -1)
-	replaced = strings.Replace(replaced, "#server_password#", server_password, -1)
+	replaced = strings.Replace(replaced, "#password#", password, -1)
 	return replaced
 }
 
@@ -76,6 +100,11 @@ func system(cmd string) {
 
 }
 
+func reboot() {
+	time.Sleep(1 * time.Second)
+	system("reboot")
+}
+
 func main() {
 	router := gin.Default()
 
@@ -92,7 +121,6 @@ func main() {
 
 	router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index", gin.H{
-			"title":     "Main website",
 			"reloading": false,
 		})
 	})
@@ -108,6 +136,9 @@ func main() {
 		writeFile(*configSavePath, getPicomConfig(username, server, server_password), 0644)
 
 		writeFile("/etc/wpa_supplicant/wpa_supplicant.conf", getWpaSupplicant(ssid, password), 0644)
+
+		writeFile("/etc/rc.local", rcLocal, 0664)
+
 		system("chown root.root /etc/wpa_supplicant/wpa_supplicant.conf")
 		system("chmod 600 /etc/wpa_supplicant/wpa_supplicant.conf")
 
@@ -127,11 +158,9 @@ func main() {
 		system("systemctl disable dnsmasq")
 		system("systemctl disable hostapd")
 
-		system("reboot")
+		go reboot()
 
 		c.HTML(http.StatusOK, "index", gin.H{
-			"ssid":      ssid,
-			"password":  password,
 			"reloading": true,
 		})
 	})
