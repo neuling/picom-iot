@@ -2,10 +2,8 @@ package main
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
-	"time"
 )
 
 const (
@@ -53,40 +51,22 @@ if [ "$_IP" ]; then
 fi
 
 # Start PICOM Setup Server
+export GIN_MODE=release
 sudo /home/pi/bin/picom-iot-server --saveConfigPath="/home/pi/.picom" &
 
 exit 0`
 )
 
-func isDevelopment() bool {
-	env := os.Getenv("ENV")
-	return env == "development"
-}
-
 func writeFile(filename string, data string, perm os.FileMode) {
-	if isDevelopment() {
-		log.Println("Write file: " + filename)
-	} else {
-		ioutil.WriteFile(filename, []byte(data), perm)
-	}
+	ioutil.WriteFile(filename, []byte(data), perm)
 }
 
-func system(cmd string) {
-	if isDevelopment() {
-		log.Println("System: " + cmd)
-	} else {
-		exec.Command(cmd).Run()
-	}
-
-}
-
-func reboot() {
-	time.Sleep(1 * time.Second)
-	system("reboot")
+func system(cmd string, args ...string) {
+	exec.Command(cmd, args...).Run()
 }
 
 func main() {
-	system("rm -f /etc/wpa_supplicant/wpa_supplicant.conf")
+	system("rm", "-f", "/etc/wpa_supplicant/wpa_supplicant.conf")
 
 	writeFile("/etc/dhcpcd.conf", dhcpcdConfHost, 0664)
 	writeFile("/etc/hostapd/hostapd.conf", hostapdConf, 0664)
@@ -104,5 +84,5 @@ func main() {
 	system("systemctl unmask hostapd.service")
 	system("systemctl enable hostapd")
 
-	go reboot()
+	system("reboot")
 }
