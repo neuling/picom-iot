@@ -1,14 +1,19 @@
 package main
 
 import (
+	"flag"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"os/user"
 	"strings"
 
+	"html/template"
+
 	"github.com/gin-gonic/gin"
+	"github.com/gobuffalo/packr"
 )
 
 const (
@@ -30,11 +35,22 @@ option ntp_servers
 option interface_mtu
 require dhcp_server_identifier
 slaac private`
+	picomConfig = `#server#
+#username#
+#password#
+`
 )
 
 func isDevelopment() bool {
 	env := os.Getenv("ENV")
 	return env == "development"
+}
+
+func getPicomConfig(username string, server string, server_password string) string {
+	replaced := strings.Replace(picomConfig, "#username#", username, -1)
+	replaced = strings.Replace(replaced, "#server#", server, -1)
+	replaced = strings.Replace(replaced, "#server_password#", server_password, -1)
+	return replaced
 }
 
 func getWpaSupplicant(ssid string, password string) string {
@@ -55,7 +71,7 @@ func system(cmd string) {
 	if isDevelopment() {
 		log.Println("System: " + cmd)
 	} else {
-		exec.Command(cmd)
+		exec.Command(cmd).Run()
 	}
 
 }
@@ -63,18 +79,33 @@ func system(cmd string) {
 func main() {
 	router := gin.Default()
 
-	router.Static("/assets", "./cmd/server/assets")
-	router.LoadHTMLGlob("./cmd/server/views/*")
+	usr, _ := user.Current()
+
+	configSavePath := flag.String("saveConfigPath", usr.HomeDir+"/.picom", "path to save generated config")
+	flag.Parse()
+
+	views := packr.NewBox("./views")
+	s, _ := views.FindString("index.tmpl")
+	html := template.Must(template.New("index").Parse(s))
+
+	router.SetHTMLTemplate(html)
 
 	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"title": "Main website",
+		c.HTML(http.StatusOK, "index", gin.H{
+			"title":     "Main website",
+			"reloading": false,
 		})
 	})
 
 	router.POST("/", func(c *gin.Context) {
 		ssid := c.PostForm("ssid")
 		password := c.PostForm("password")
+
+		username := c.PostForm("username")
+		server := c.PostForm("server")
+		server_password := c.PostForm("server_password")
+
+		writeFile(*configSavePath, getPicomConfig(username, server, server_password), 0644)
 
 		writeFile("/etc/wpa_supplicant/wpa_supplicant.conf", getWpaSupplicant(ssid, password), 0644)
 		system("chown root.root /etc/wpa_supplicant/wpa_supplicant.conf")
@@ -98,9 +129,10 @@ func main() {
 
 		system("reboot")
 
-		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"ssid":     ssid,
-			"password": password,
+		c.HTML(http.StatusOK, "index", gin.H{
+			"ssid":      ssid,
+			"password":  password,
+			"reloading": true,
 		})
 	})
 
