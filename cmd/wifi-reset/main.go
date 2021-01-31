@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"time"
 )
 
 const (
@@ -52,7 +53,7 @@ if [ "$_IP" ]; then
 fi
 
 # Start PICOM Setup Server
-sudo /home/pi/bin/picom-iot-server &
+sudo /home/pi/bin/picom-iot-server --saveConfigPath="/home/pi/.picom" &
 
 exit 0`
 )
@@ -79,6 +80,11 @@ func system(cmd string) {
 
 }
 
+func reboot() {
+	time.Sleep(1 * time.Second)
+	system("reboot")
+}
+
 func main() {
 	system("rm -f /etc/wpa_supplicant/wpa_supplicant.conf")
 
@@ -98,5 +104,5 @@ func main() {
 	system("systemctl unmask hostapd.service")
 	system("systemctl enable hostapd")
 
-	system("reboot")
+	go reboot()
 }
