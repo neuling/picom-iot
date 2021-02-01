@@ -52,7 +52,7 @@ fi
 
 # Start PICOM Setup Server
 export GIN_MODE=release
-sudo /home/pi/bin/picom-iot-server --saveConfigPath="/home/pi/.picom" &
+sudo /home/pi/bin/picom-setup-server --saveConfigPath="/home/pi/.picom" &
 
 exit 0`
 )

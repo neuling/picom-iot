@@ -59,8 +59,8 @@ if [ "$_IP" ]; then
   printf "My IP address is %s\n" "$_IP"
 fi
 
-# Start PICOM Setup Server
-# sudo /home/pi/bin/picom-client &
+# Start PICOM Client
+/home/pi/bin/picom-client &
 
 exit 0`
 )
