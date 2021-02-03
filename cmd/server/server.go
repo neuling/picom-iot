@@ -155,13 +155,11 @@ func main() {
 		system("chown root.root /etc/default/hostapd")
 		system("chmod 644 /etc/default/hostapd")
 
-		system("systemctl disable dnsmasq")
-		system("systemctl disable hostapd")
-		system("systemctl disable picom-setup-server")
+		system("sudo systemctl disable dnsmasq")
+		system("sudo systemctl disable hostapd")
+		system("sudo systemctl disable picom-setup-server")
 
-		system("systemctl enable dnsmasq")
-		system("systemctl enable hostapd")
-		system("systemctl enable picom-client")
+		system("sudo systemctl enable picom-client")
 
 		go reboot()
 
