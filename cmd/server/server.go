@@ -157,6 +157,11 @@ func main() {
 
 		system("systemctl disable dnsmasq")
 		system("systemctl disable hostapd")
+		system("systemctl disable picom-setup-server")
+
+		system("systemctl enable dnsmasq")
+		system("systemctl enable hostapd")
+		system("systemctl enable picom-client")
 
 		go reboot()
 

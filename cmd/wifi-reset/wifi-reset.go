@@ -80,8 +80,11 @@ func main() {
 	system("chown root.root /etc/dnsmasq.conf")
 	system("chown root.root /etc/default/hostapd")
 
+	system("systemctl disable picom-client")
+
 	system("systemctl enable dnsmasq")
 	system("systemctl enable hostapd")
+	system("systemctl enable picom-setup-server")
 
 	system("reboot")
 }
