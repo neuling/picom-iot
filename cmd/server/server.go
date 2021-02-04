@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"regexp"
 	"strings"
 	"time"
 
@@ -65,6 +66,10 @@ fi
 exit 0`
 )
 
+// type Wifi struct {
+// 	ssid string
+// }
+
 func isDevelopment() bool {
 	env := os.Getenv("ENV")
 	return env == "development"
@@ -100,8 +105,29 @@ func system(cmd string) {
 
 }
 
+func wifis() []string {
+	var wifis []string
+	ssidRegexp := regexp.MustCompile(`(?s)ESSID:"(.*)"`)
+
+	stdout, err := exec.Command("bash", "-c", "sudo iwlist scan").CombinedOutput()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	networks := strings.Split(string(stdout), "Cell")
+
+	for _, network := range networks {
+		ssidMatch := ssidRegexp.FindStringSubmatch(network)
+		if len(ssidMatch) != 0 {
+			wifis = append(wifis, ssidMatch[1])
+		}
+	}
+
+	return wifis
+}
+
 func reboot() {
-	time.Sleep(1 * time.Second)
+	time.Sleep(5 * time.Second)
 	system("reboot")
 }
 
@@ -122,6 +148,7 @@ func main() {
 	router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index", gin.H{
 			"reloading": false,
+			"wifis":     wifis(),
 		})
 	})
 
